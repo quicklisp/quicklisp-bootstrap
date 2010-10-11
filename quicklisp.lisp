@@ -1530,6 +1530,7 @@ the indexes in the header accordingly."
 
 (defun install (&key ((:path *home*) *home*)
                 ((:proxy *proxy-url*) *proxy-url*))
+  (setf *home* (merge-pathnames *home*))
   (if (find-package '#:ql)
       (progn
         (write-line "!!! Quicklisp has already been set up. !!!")
