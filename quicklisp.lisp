@@ -925,7 +925,8 @@
       (add-line "Host: " host (if (= port 80) ""
                                   (format nil ":~D" port)))
       (add-line "Connection: close")
-      (add-line "User-Agent: quicklisp/1.0")
+      ;; FIXME: get this version string from somewhere else.
+      (add-line "User-Agent: quicklisp-bootstrap/2010101400")
       (add-newline sink)
       (sink-buffer sink))))
 
