@@ -1532,6 +1532,15 @@ the indexes in the header accordingly."
 (defun install (&key ((:path *home*) *home*)
                 ((:proxy *proxy-url*) *proxy-url*))
   (setf *home* (merge-pathnames *home*))
+  (let ((setup-file (qmerge "setup.lisp")))
+    (when (probe-file setup-file)
+      (multiple-value-bind (result proceed)
+          (with-simple-restart (load-setup "Load ~S" setup-file)
+            (error "Quicklisp has already been installed. Load ~S instead."
+                   setup-file))
+        (declare (ignore result))
+        (when proceed
+          (return-from install (load setup-file))))))
   (if (find-package '#:ql)
       (progn
         (write-line "!!! Quicklisp has already been set up. !!!")
@@ -1539,13 +1548,4 @@ the indexes in the header accordingly."
         t)
       (call-with-quiet-compilation #'initial-install)))
 
-(let ((setup-file (qmerge "setup.lisp")))
-  (if (probe-file setup-file)
-      (multiple-value-bind (result proceed)
-          (with-simple-restart (load-setup "Load ~S" setup-file)
-            (error "Quicklisp has already been installed. Load ~S instead."
-                   setup-file))
-        (declare (ignore result))
-        (when proceed
-          (load setup-file)))
-      (write-string *after-load-message*)))
+(write-string *after-load-message*)
