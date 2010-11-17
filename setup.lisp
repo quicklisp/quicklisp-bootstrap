@@ -27,7 +27,7 @@
 ;;; ASDF is a hard requirement of quicklisp. Make sure it's either
 ;;; already loaded or load it from quicklisp's bundled version.
 
-(defvar *required-asdf-version* "2.009")
+(defvar *required-asdf-version* "2.010")
 
 (defun ensure-asdf-loaded ()
   (let* ((source (qmerge "asdf.lisp"))
