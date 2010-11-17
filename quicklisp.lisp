@@ -1548,4 +1548,11 @@ the indexes in the header accordingly."
         t)
       (call-with-quiet-compilation #'initial-install)))
 
+;;; Try to canonicalize to an absolute pathname; helps on Lisps where
+;;; *default-pathname-defaults* isn't an absolute pathname at startup
+;;; (e.g. CCL, CMUCL)
+(setf *default-pathname-defaults* (truename *default-pathname-defaults*))
+
 (write-string *after-load-message*)
+
+;;; End of quicklisp.lisp
