@@ -9,8 +9,24 @@
 (unless *load-truename*
   (error "This file must be LOADed to set up quicklisp."))
 
+(defun has-features (&rest has-features)
+  (every 
+   (lambda (feature)
+     (member feature cl:*features*))
+   has-features))
+
 (defvar *quicklisp-home*
-  (pathname (directory-namestring *load-truename*)))
+  (let ((host (pathname-host *load-truename*))
+	(device (pathname-device *load-truename*))
+	(directory (pathname-directory *load-truename*)))
+  (cond
+    ((or (has-features :windows :ccl)
+	 (has-features :win32 :sbcl)
+	 (has-features :win32 :clisp))
+     (make-pathname :device device :directory directory))
+    ((has-features :lispworks :win32) 
+     (make-pathname :host host :directory directory))
+    (t (pathname (directory-namestring *load-truename*))))))
 
 (defun qmerge (pathname)
   (merge-pathnames pathname *quicklisp-home*))
