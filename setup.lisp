@@ -10,7 +10,8 @@
   (error "This file must be LOADed to set up quicklisp."))
 
 (defvar *quicklisp-home*
-  (pathname (directory-namestring *load-truename*)))
+  (make-pathname :name nil :type nil
+                 :defaults *load-truename*))
 
 (defun qmerge (pathname)
   (merge-pathnames pathname *quicklisp-home*))
