@@ -271,9 +271,7 @@
    (require "comm"))
   (:reexport-from #:comm
                   #:open-tcp-stream
-                  #:get-host-entry)
-  (:reexport-from #:system
-                  #:wait-for-input-streams))
+                  #:get-host-entry))
 
 
 ;;; SBCL
@@ -397,11 +395,6 @@
     (qlqs-clisp:read-byte-sequence buffer connection
                                   :no-hang nil
                                   :interactive t)))
-
-(defimplementation (read-octets :for lispworks :qualifier :before)
-    (buffer connection)
-  (declare (ignore buffer))
-  (qlqs-lispworks:wait-for-input-streams (list connection)))
 
 (definterface write-octets (buffer connection)
   (:implementation t
