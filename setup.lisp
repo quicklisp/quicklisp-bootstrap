@@ -19,12 +19,6 @@
 (defun qenough (pathname)
   (enough-namestring pathname *quicklisp-home*))
 
-(defun file-date< (file1 file2)
-  (and (probe-file file1)
-       (probe-file file2)
-       (< (file-write-date file1)
-          (file-write-date file2))))
-
 ;;; ASDF is a hard requirement of quicklisp. Make sure it's either
 ;;; already loaded or load it from quicklisp's bundled version.
 
