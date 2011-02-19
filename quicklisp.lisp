@@ -388,6 +388,7 @@
 
 (definterface read-octets (buffer connection)
   (:implementation t
+    ;; ECL bug #3161786.
     (if (equal (stream-element-type connection)
                '(unsigned-byte 8))
       (read-sequence buffer connection)
