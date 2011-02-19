@@ -388,17 +388,20 @@
 
 (definterface read-octets (buffer connection)
   (:implementation t
-    (read-sequence buffer connection))
+    (if (equal (stream-element-type connection)
+               '(unsigned-byte 8))
+      (read-sequence buffer connection)
+      (let ((length (array-dimension buffer 0)))
+        (loop for i from 0 to (1- length) do
+          (setf (aref buffer i)
+                (read-byte connection)))
+        length)))
   (:implementation allegro
     (qlqs-allegro:read-vector buffer connection))
   (:implementation clisp
     (qlqs-clisp:read-byte-sequence buffer connection
                                   :no-hang nil
-                                  :interactive t))
-  (:implementation ecl
-    (loop for i from 0 to (1- (array-dimension buffer 0)) do
-      (setf (aref buffer i)
-            (read-byte connection)))))
+                                  :interactive t)))
 
 (definterface write-octets (buffer connection)
   (:implementation t
