@@ -394,7 +394,11 @@
   (:implementation clisp
     (qlqs-clisp:read-byte-sequence buffer connection
                                   :no-hang nil
-                                  :interactive t)))
+                                  :interactive t))
+  (:implementation ecl
+    (loop for i from 0 to (1- (array-dimension buffer 0)) do
+      (setf (aref buffer i)
+            (read-byte connection)))))
 
 (definterface write-octets (buffer connection)
   (:implementation t
