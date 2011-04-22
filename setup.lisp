@@ -14,6 +14,7 @@
                  :defaults *load-truename*))
 
 (defun qmerge (pathname)
+  "Return PATHNAME merged with the base Quicklisp directory."
   (merge-pathnames pathname *quicklisp-home*))
 
 (defun qenough (pathname)
@@ -22,11 +23,64 @@
 ;;; ASDF is a hard requirement of quicklisp. Make sure it's either
 ;;; already loaded or load it from quicklisp's bundled version.
 
-(defvar *required-asdf-version* "2.014")
+(defvar *required-asdf-version* "2.011")
+
+;;; Put ASDF's fasls in a separate directory
+
+(defun implementation-signature ()
+  "Return a string suitable for discriminating different
+implementations, or similar implementations with possibly-incompatible
+FASLs."
+  (let ((*print-pretty* nil))
+    (format nil "lisp-implementation-type: ~A~%~
+                 lisp-implementation-version: ~A~%~
+                 machine-type: ~A~%~
+                 machine-version: ~A~%"
+            (lisp-implementation-type)
+            (lisp-implementation-version)
+            (machine-type)
+            (machine-version))))
+
+(defun dumb-string-hash (string)
+  "Produce a six-character hash of STRING."
+  (let ((hash #xD13CCD13))
+    (loop for char across string
+          for value = (char-code char)
+          do
+          (setf hash (logand #xFFFFFFFF
+                             (logxor (ash hash 5)
+                                     (ash hash -27)
+                                     value))))
+    (subseq (format nil "~(~36,6,'0R~)" (mod hash 88888901))
+            0 6)))
+
+(defun asdf-fasl-pathname ()
+  "Return a pathname suitable for storing the ASDF FASL, separated
+from ASDF FASLs from incompatible implementations. Also, save a file
+in the directory with the implementation signature, if it doesn't
+already exist."
+  (let* ((implementation-signature (implementation-signature))
+         (original-fasl (compile-file-pathname (qmerge "asdf.lisp")))
+         (fasl
+          (qmerge (make-pathname
+                   :defaults original-fasl
+                   :directory
+                   (list :relative "asdf-fasls"
+                         (dumb-string-hash implementation-signature)))))
+         (signature-file (merge-pathnames "signature.txt" fasl)))
+    (ensure-directories-exist fasl)
+    (unless (probe-file signature-file)
+      (with-open-file (stream signature-file :direction :output)
+        (write-string implementation-signature stream)))
+    fasl))
 
 (defun ensure-asdf-loaded ()
+  "Try several methods to make sure that a sufficiently-new ASDF is
+loaded: first try (require 'asdf), then loading the ASDF FASL, then
+compiling asdf.lisp to a FASL and then loading it."
   (let* ((source (qmerge "asdf.lisp"))
-         (fasl (compile-file-pathname source)))
+         (fasl (asdf-fasl-pathname)))
+    (ensure-directories-exist fasl)
     (labels ((asdf-symbol (name)
                (let ((asdf-package (find-package '#:asdf)))
                  (when asdf-package
@@ -49,7 +103,7 @@
           (try)
           (try (require 'asdf))
           (try (load fasl :verbose nil))
-          (try (load (compile-file source :verbose nil)))
+          (try (load (compile-file source :verbose nil :output-file fasl)))
           (error "Could not load ASDF ~S or newer" *required-asdf-version*))))))
 
 (ensure-asdf-loaded)
