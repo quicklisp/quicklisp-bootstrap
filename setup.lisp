@@ -65,7 +65,9 @@ already exist."
           (qmerge (make-pathname
                    :defaults original-fasl
                    :directory
-                   (list :relative "asdf-fasls"
+                   (list :relative
+                         "cache"
+                         "asdf-fasls"
                          (dumb-string-hash implementation-signature)))))
          (signature-file (merge-pathnames "signature.txt" fasl)))
     (ensure-directories-exist fasl)
