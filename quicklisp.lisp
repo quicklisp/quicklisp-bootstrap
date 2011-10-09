@@ -71,10 +71,12 @@
 (defpackage #:quicklisp-quickstart
   (:use #:cl #:qlqs-impl #:qlqs-impl-util #:qlqs-http #:qlqs-minitar)
   (:export #:install
+           #:help
            #:*proxy-url*
            #:*asdf-url*
            #:*quicklisp-tar-url*
            #:*setup-url*
+           #:*help-message*
            #:*after-load-message*
            #:*after-initial-setup-message*))
 
@@ -1498,9 +1500,16 @@ the indexes in the header accordingly."
 (defvar *asdf-url* "http://beta.quicklisp.org/quickstart/asdf.lisp")
 (defvar *quicklisp-tar-url* "http://beta.quicklisp.org/quickstart/quicklisp.tar")
 (defvar *setup-url* "http://beta.quicklisp.org/quickstart/setup.lisp")
+(defvar *help-message*
+  (format nil "~&~%  ==== quicklisp quickstart install help ====~%~%    ~
+               quicklisp-quickstart:install can take the following ~
+               optional arguments:~%~%      ~
+                 :directory \"/path/to/installation/\"~%~%      ~
+                 :proxy \"http://your.proxy:port/\"~%~%"))
 (defvar *after-load-message*
   (format nil "~&~%  ==== quicklisp quickstart loaded ====~%~%    ~
-               To continue, evaluate: (quicklisp-quickstart:install)~%~%"))
+               To continue with installation, evaluate: (quicklisp-quickstart:install)~%~%    ~
+               For installation options, evaluate: (quicklisp-quickstart:help)~%~%"))
 
 (defvar *after-initial-setup-message*
   (with-output-to-string (*standard-output*)
@@ -1521,6 +1530,10 @@ the indexes in the header accordingly."
   (load (qmerge "setup.lisp"))
   (write-string *after-initial-setup-message*)
   (finish-output))
+
+(defun help ()
+  (write-string *help-message*)
+  t)
 
 (defun install (&key ((:path *home*) *home*)
                 ((:proxy *proxy-url*) *proxy-url*))
