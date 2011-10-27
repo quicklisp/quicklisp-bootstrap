@@ -248,6 +248,16 @@
 (defvar qlqs-cmucl:*gc-verbose* nil)
 
 
+;;; Scieneer CL
+
+(define-implementation-package :scl #:qlqs-scl
+  (:documentation "Scieneer Common Lisp - http://www.scieneer.com/scl/")
+  (:class scl)
+  (:reexport-from #:system
+                  #:make-fd-stream)
+  (:reexport-from #:extensions
+                  #:connect-to-inet-socket))
+
 ;;; ECL
 
 (define-implementation-package :ecl #:qlqs-ecl
@@ -357,6 +367,12 @@
                                 :binary-stream-p t
                                 :input t
                                 :output t)))
+  (:implementation scl
+    (let ((fd (qlqs-scl:connect-to-inet-socket host port)))
+      (qlqs-scl:make-fd-stream fd
+			       :element-type '(unsigned-byte 8)
+			       :input t
+			       :output t)))
   (:implementation ecl
     (let* ((endpoint (qlqs-ecl:host-ent-address
                       (qlqs-ecl:get-host-by-name host)))
