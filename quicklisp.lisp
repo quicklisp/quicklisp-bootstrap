@@ -1520,7 +1520,7 @@ the indexes in the header accordingly."
   (format nil "~&~%  ==== quicklisp quickstart install help ====~%~%    ~
                quicklisp-quickstart:install can take the following ~
                optional arguments:~%~%      ~
-                 :directory \"/path/to/installation/\"~%~%      ~
+                 :path \"/path/to/installation/\"~%~%      ~
                  :proxy \"http://your.proxy:port/\"~%~%"))
 (defvar *after-load-message*
   (format nil "~&~%  ==== quicklisp quickstart loaded ====~%~%    ~
