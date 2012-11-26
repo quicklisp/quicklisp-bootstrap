@@ -23,7 +23,7 @@
 ;;; ASDF is a hard requirement of quicklisp. Make sure it's either
 ;;; already loaded or load it from quicklisp's bundled version.
 
-(defvar *required-asdf-version* "2.011")
+(defvar *required-asdf-version* "2.26")
 
 ;;; Put ASDF's fasls in a separate directory
 
@@ -31,6 +31,8 @@
   "Return a string suitable for discriminating different
 implementations, or similar implementations with possibly-incompatible
 FASLs."
+  ;; XXX Will this have problems with stuff like threads vs
+  ;; non-threads fasls?
   (let ((*print-pretty* nil))
     (format nil "lisp-implementation-type: ~A~%~
                  lisp-implementation-version: ~A~%~
