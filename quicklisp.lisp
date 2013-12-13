@@ -66,8 +66,7 @@
 
 (defpackage #:qlqs-minitar
   (:use #:cl)
-  (:export #:tarball-contents
-           #:unpack-tarball))
+  (:export #:unpack-tarball))
 
 (defpackage #:quicklisp-quickstart
   (:use #:cl #:qlqs-impl #:qlqs-impl-util #:qlqs-http #:qlqs-minitar)
