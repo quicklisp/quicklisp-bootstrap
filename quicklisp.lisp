@@ -406,6 +406,7 @@
   (:implementation lispworks
     (qlqs-lispworks:open-tcp-stream host port
                                    :direction :io
+                                   :errorp t
                                    :read-timeout nil
                                    :element-type '(unsigned-byte 8)
                                    :timeout 5))
