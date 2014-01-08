@@ -1544,8 +1544,13 @@ the indexes in the header accordingly."
     (fetch url tmpfile)
     (rename-file tmpfile file)))
 
+(defvar *quickstart-parameters* nil
+  "This plist is populated with parameters that may carry over to the
+  initial configuration of the client, e.g. :proxy-url
+  or :initial-dist-url")
+
 (defvar *client-info-url*
-  "http://alpha.quicklisp.org/client/quicklisp.txt")
+  "http://zeta.quicklisp.org/client/quicklisp.sexp")
 
 (defclass client-info ()
   ((setup-url
@@ -1587,7 +1592,11 @@ the indexes in the header accordingly."
                      :version version))))
 
 (defun client-info-url-from-version (version)
-  (format nil "http://alpha.quicklisp.org/client/~A/client-info.sexp"
+  (format nil "http://zeta.quicklisp.org/client/~A/client-info.sexp"
+          version))
+
+(defun distinfo-url-from-version (version)
+  (format nil "http://zeta.quicklisp.org/dist/~A/distinfo.txt"
           version))
 
 (defvar *help-message*
@@ -1597,7 +1606,9 @@ the indexes in the header accordingly."
                  :path \"/path/to/installation/\"~%~%      ~
                  :proxy \"http://your.proxy:port/\"~%~%      ~
                  :client-url <url>~%~%      ~
-                 :client-version <version>~%~%"))
+                 :client-version <version>~%~%      ~
+                 :dist-url <url>~%~%      ~
+                 :dist-version <version>~%~%"))
 
 (defvar *after-load-message*
   (format nil "~&~%  ==== quicklisp quickstart loaded ====~%~%    ~
@@ -1612,7 +1623,10 @@ the indexes in the header accordingly."
     (format t "    To load Quicklisp every time you start Lisp, use: (ql:add-to-init-file)~%~%")
     (format t "    For more information, see http://www.quicklisp.org/beta/~%~%")))
 
-(defun initial-install (&key (client-url *client-info-url*))
+(defun initial-install (&key (client-url *client-info-url*) dist-url)
+  (setf *quickstart-parameters*
+        (list :proxy-url *proxy-url*
+              :initial-dist-url dist-url))
   (ensure-directories-exist (qmerge "tmp/"))
   (let ((client-info (fetch-client-info client-url))
         (tmptar (qmerge "tmp/quicklisp.tar"))
@@ -1631,7 +1645,9 @@ the indexes in the header accordingly."
 (defun install (&key ((:path *home*) *home*)
                   ((:proxy *proxy-url*) *proxy-url*)
                   client-url
-                  client-version)
+                  client-version
+                  dist-url
+                  dist-version)
   (when (pathname-name *home*)
     (let ((name (pathname-name *home*)))
       (warn "Making ~A part of the install pathname directory"
@@ -1659,11 +1675,17 @@ the indexes in the header accordingly."
         t)
       (call-with-quiet-compilation
        (lambda ()
-         (let ((url (or client-url
-                        (and client-version
-                             (client-info-url-from-version client-version)
-                             *client-info-url*))))
-           (initial-install :client-url url))))))
+         (let ((client-url (or client-url
+                               (and client-version
+                                    (client-info-url-from-version client-version))
+                               *client-info-url*))
+               ;; It's ok for dist-url to be nil; there's a default in
+               ;; the client
+               (dist-url (or dist-url
+                             (and dist-version
+                                  (distinfo-url-from-version dist-version)))))
+           (initial-install :client-url client-url
+                            :dist-url dist-url))))))
 
 (write-string *after-load-message*)
 
