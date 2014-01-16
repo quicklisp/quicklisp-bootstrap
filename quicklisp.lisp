@@ -1567,7 +1567,10 @@ the indexes in the header accordingly."
     :initarg :version)
    (plist
     :reader plist
-    :initarg :plist)))
+    :initarg :plist)
+   (source-file
+    :reader source-file
+    :initarg :source-file)))
 
 (defmethod print-object ((client-info client-info) stream)
   (print-unreadable-object (client-info stream :type t)
@@ -1583,11 +1586,13 @@ the indexes in the header accordingly."
     (ensure-directories-exist local-client-info-file)
     (renaming-fetch url local-client-info-file)
     (with-open-file (stream local-client-info-file)
-      (safely-read stream))))
+      (list* :source-file local-client-info-file
+             (safely-read stream)))))
 
 (defun fetch-client-info (url)
   (let ((plist (fetch-client-info-plist url)))
     (destructuring-bind (&key setup-url asdf-url client-tar-url version
+                              source-file
                               &allow-other-keys)
         plist
       (unless (and setup-url asdf-url client-tar-url version)
@@ -1597,7 +1602,8 @@ the indexes in the header accordingly."
                      :asdf-url asdf-url
                      :client-tar-url client-tar-url
                      :version version
-                     :plist plist))))
+                     :plist plist
+                     :source-file source-file))))
 
 (defun client-info-url-from-version (version)
   (format nil "http://zeta.quicklisp.org/client/~A/client-info.sexp"
@@ -1644,6 +1650,7 @@ the indexes in the header accordingly."
     (unpack-tarball tmptar :directory (qmerge "./"))
     (renaming-fetch (setup-url client-info) setup)
     (renaming-fetch (asdf-url client-info) asdf)
+    (rename-file (source-file client-info) (qmerge "client-info.sexp"))
     (load setup :verbose nil :print nil)
     (write-string *after-initial-setup-message*)
     (finish-output)))
