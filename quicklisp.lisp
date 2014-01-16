@@ -1556,12 +1556,18 @@ the indexes in the header accordingly."
   ((setup-url
     :reader setup-url
     :initarg :setup-url)
+   (asdf-url
+    :reader asdf-url
+    :initarg :asdf-url)
    (client-tar-url
     :reader client-tar-url
     :initarg :client-tar-url)
    (version
     :reader version
-    :initarg :version)))
+    :initarg :version)
+   (plist
+    :reader plist
+    :initarg :plist)))
 
 (defmethod print-object ((client-info client-info) stream)
   (print-unreadable-object (client-info stream :type t)
@@ -1581,15 +1587,17 @@ the indexes in the header accordingly."
 
 (defun fetch-client-info (url)
   (let ((plist (fetch-client-info-plist url)))
-    (destructuring-bind (&key setup-url client-tar-url version
+    (destructuring-bind (&key setup-url asdf-url client-tar-url version
                               &allow-other-keys)
         plist
-      (unless (and setup-url client-tar-url version)
+      (unless (and setup-url asdf-url client-tar-url version)
         (error "Invalid data from client info URL -- ~A" url))
       (make-instance 'client-info
                      :setup-url setup-url
+                     :asdf-url asdf-url
                      :client-tar-url client-tar-url
-                     :version version))))
+                     :version version
+                     :plist plist))))
 
 (defun client-info-url-from-version (version)
   (format nil "http://zeta.quicklisp.org/client/~A/client-info.sexp"
@@ -1630,10 +1638,12 @@ the indexes in the header accordingly."
   (ensure-directories-exist (qmerge "tmp/"))
   (let ((client-info (fetch-client-info client-url))
         (tmptar (qmerge "tmp/quicklisp.tar"))
-        (setup (qmerge "setup.lisp")))
+        (setup (qmerge "setup.lisp"))
+        (asdf (qmerge "asdf.lisp")))
     (renaming-fetch (client-tar-url client-info) tmptar)
     (unpack-tarball tmptar :directory (qmerge "./"))
     (renaming-fetch (setup-url client-info) setup)
+    (renaming-fetch (asdf-url client-info) asdf)
     (load setup :verbose nil :print nil)
     (write-string *after-initial-setup-message*)
     (finish-output)))
