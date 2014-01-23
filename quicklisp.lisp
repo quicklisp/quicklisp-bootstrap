@@ -1591,16 +1591,16 @@ the indexes in the header accordingly."
 
 (defun fetch-client-info (url)
   (let ((plist (fetch-client-info-plist url)))
-    (destructuring-bind (&key setup-url asdf-url client-tar-url version
+    (destructuring-bind (&key setup asdf client-tar version
                               source-file
                               &allow-other-keys)
         plist
-      (unless (and setup-url asdf-url client-tar-url version)
+      (unless (and setup asdf client-tar version)
         (error "Invalid data from client info URL -- ~A" url))
       (make-instance 'client-info
-                     :setup-url setup-url
-                     :asdf-url asdf-url
-                     :client-tar-url client-tar-url
+                     :setup-url (getf setup :url)
+                     :asdf-url (getf asdf :url)
+                     :client-tar-url (getf client-tar :url)
                      :version version
                      :plist plist
                      :source-file source-file))))
