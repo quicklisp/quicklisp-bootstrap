@@ -19,6 +19,11 @@
   (:use #:cl))
 (cl:in-package #:qlqs-user)
 
+(defpackage #:qlqs-info
+  (:export #:*version*))
+
+(defvar qlqs-info:*version* "2014-01-28")
+
 (defpackage #:qlqs-impl
   (:use #:cl)
   (:export #:*implementation*)
@@ -968,7 +973,8 @@
                                   (format nil ":~D" port)))
       (add-line "Connection: close")
       ;; FIXME: get this version string from somewhere else.
-      (add-line "User-Agent: quicklisp-bootstrap/2014-01-28")
+      (add-line "User-Agent: quicklisp-bootstrap/"
+                qlqs-info:*version*)
       (add-newline sink)
       (sink-buffer sink))))
 
