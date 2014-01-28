@@ -968,7 +968,7 @@
                                   (format nil ":~D" port)))
       (add-line "Connection: close")
       ;; FIXME: get this version string from somewhere else.
-      (add-line "User-Agent: quicklisp-bootstrap/2014-01-22-zeta")
+      (add-line "User-Agent: quicklisp-bootstrap/2014-01-28")
       (add-newline sink)
       (sink-buffer sink))))
 
