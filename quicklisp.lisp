@@ -1549,8 +1549,11 @@ the indexes in the header accordingly."
   initial configuration of the client, e.g. :proxy-url
   or :initial-dist-url")
 
+(defvar *quicklisp-hostname* "beta.quicklisp.org")
+
 (defvar *client-info-url*
-  "http://zeta.quicklisp.org/client/quicklisp.sexp")
+  (format nil "http://~A/client/quicklisp.sexp"
+          *quicklisp-hostname*))
 
 (defclass client-info ()
   ((setup-url
@@ -1606,11 +1609,13 @@ the indexes in the header accordingly."
                      :source-file source-file))))
 
 (defun client-info-url-from-version (version)
-  (format nil "http://zeta.quicklisp.org/client/~A/client-info.sexp"
+  (format nil "http://~A/client/~A/client-info.sexp"
+          *quicklisp-hostname*
           version))
 
 (defun distinfo-url-from-version (version)
-  (format nil "http://zeta.quicklisp.org/dist/~A/distinfo.txt"
+  (format nil "http://~A/dist/~A/distinfo.txt"
+          *quicklisp-hostname*
           version))
 
 (defvar *help-message*
