@@ -1676,17 +1676,19 @@ the indexes in the header accordingly."
                   client-version
                   dist-url
                   dist-version)
-  (when (pathname-name *home*)
-    (let ((name (pathname-name *home*)))
+  (setf *home* (merge-pathnames *home* (truename *default-pathname-defaults*)))
+  (when (or (pathname-name *home*)
+            (pathname-type *home*))
+    (let ((name (file-namestring *home*)))
       (warn "Making ~A part of the install pathname directory"
             name)
-      ;; This corrects a pathname like "/foo/bar" to "/foo/bar/"
+      ;; This corrects a pathname like "/foo/bar" to "/foo/bar/" and
+      ;; "foo" to "foo/"
       ;; FIXME: What about a pathname like /foo/.quicklisp?
       (setf *home*
             (make-pathname :defaults *home*
                            :directory (append (pathname-directory *home*)
                                               (list name))))))
-  (setf *home* (merge-pathnames *home*))
   (let ((setup-file (qmerge "setup.lisp")))
     (when (probe-file setup-file)
       (multiple-value-bind (result proceed)
