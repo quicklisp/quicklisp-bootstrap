@@ -22,7 +22,7 @@
 (defpackage #:qlqs-info
   (:export #:*version*))
 
-(defvar qlqs-info:*version* "2014-01-30")
+(defvar qlqs-info:*version* "2014-01-31")
 
 (defpackage #:qlqs-impl
   (:use #:cl)
