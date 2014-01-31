@@ -1677,14 +1677,12 @@ the indexes in the header accordingly."
                   dist-url
                   dist-version)
   (setf *home* (merge-pathnames *home* (truename *default-pathname-defaults*)))
-  (when (or (pathname-name *home*)
-            (pathname-type *home*))
-    (let ((name (file-namestring *home*)))
+  (let ((name (file-namestring *home*)))
+    (when name
       (warn "Making ~A part of the install pathname directory"
             name)
       ;; This corrects a pathname like "/foo/bar" to "/foo/bar/" and
       ;; "foo" to "foo/"
-      ;; FIXME: What about a pathname like /foo/.quicklisp?
       (setf *home*
             (make-pathname :defaults *home*
                            :directory (append (pathname-directory *home*)
