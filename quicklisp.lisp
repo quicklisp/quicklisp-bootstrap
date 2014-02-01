@@ -1636,9 +1636,10 @@ the indexes in the header accordingly."
                  :dist-version <version>~%~%"))
 
 (defvar *after-load-message*
-  (format nil "~&~%  ==== quicklisp quickstart loaded ====~%~%    ~
+  (format nil "~&~%  ==== quicklisp quickstart ~A loaded ====~%~%    ~
                To continue with installation, evaluate: (quicklisp-quickstart:install)~%~%    ~
-               For installation options, evaluate: (quicklisp-quickstart:help)~%~%"))
+               For installation options, evaluate: (quicklisp-quickstart:help)~%~%"
+          qlqs-info:*version*))
 
 (defvar *after-initial-setup-message*
   (with-output-to-string (*standard-output*)
@@ -1670,6 +1671,12 @@ the indexes in the header accordingly."
   (write-string *help-message*)
   t)
 
+(defun non-empty-file-namestring (pathname)
+  (let ((string (file-namestring pathname)))
+    (unless (or (null string)
+                (equal string ""))
+      string)))
+
 (defun install (&key ((:path *home*) *home*)
                   ((:proxy *proxy-url*) *proxy-url*)
                   client-url
@@ -1677,7 +1684,7 @@ the indexes in the header accordingly."
                   dist-url
                   dist-version)
   (setf *home* (merge-pathnames *home* (truename *default-pathname-defaults*)))
-  (let ((name (file-namestring *home*)))
+  (let ((name (non-empty-file-namestring *home*)))
     (when name
       (warn "Making ~A part of the install pathname directory"
             name)
