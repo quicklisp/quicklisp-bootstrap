@@ -33,6 +33,7 @@
            #:abcl
            #:allegro
            #:ccl
+           #:clasp
            #:clisp
            #:cmucl
            #:cormanlisp
@@ -227,6 +228,23 @@
   (:reexport-from #:ccl
                   #:make-socket))
 
+
+;;; CLASP
+
+(define-implementation-package :clasp #:qlqs-clasp
+  (:documentation "CLASP - http://github.com/drmeister/clasp")
+  (:class clasp)
+  (:prep
+   (require 'sockets))
+  (:intern #:host-network-address)
+  (:reexport-from #:sb-bsd-sockets
+                  #:get-host-by-name
+                  #:host-ent-address
+                  #:socket-connect
+                  #:socket-make-stream
+                  #:inet-socket))
+
+
 ;;; GNU CLISP
 
 (define-implementation-package :clisp #:qlqs-clisp
@@ -381,6 +399,18 @@
   (:implementation ccl
     (qlqs-ccl:make-socket :remote-host host
                          :remote-port port))
+  (:implementation clasp
+    (let* ((endpoint (qlqs-clasp:host-ent-address
+                      (qlqs-clasp:get-host-by-name host)))
+           (socket (make-instance 'qlqs-clasp:inet-socket
+                                  :protocol :tcp
+                                  :type :stream)))
+      (qlqs-clasp:socket-connect socket endpoint port)
+      (qlqs-clasp:socket-make-stream socket
+                                  :element-type '(unsigned-byte 8)
+                                  :input t
+                                  :output t
+                                  :buffering :full)))
   (:implementation clisp
     (qlqs-clisp:socket-connect port host :element-type '(unsigned-byte 8)))
   (:implementation cmucl
