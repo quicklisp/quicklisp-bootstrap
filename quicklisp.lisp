@@ -67,8 +67,6 @@
   (:use #:cl #:qlqs-network #:qlqs-progress)
   (:export #:fetch
            #:*proxy-url*
-           #:*proxy-user*
-           #:*proxy-pass*
            #:*maximum-redirects*
            #:*default-url-defaults*))
 
@@ -81,8 +79,6 @@
   (:export #:install
            #:help
            #:*proxy-url*
-           #:*proxy-user*
-           #:*proxy-pass*
            #:*asdf-url*
            #:*quicklisp-tar-url*
            #:*setup-url*
@@ -984,8 +980,14 @@
   (subseq (storage sink) 0))
 
 (defvar *proxy-url* nil)
-(defvar *proxy-user* nil)
-(defvar *proxy-pass* nil)
+(defver *proxy* nil
+  "instance of proxy-url")
+(defvar *proxy-server* nil
+  "proxy server address and port")
+(defvar *proxy-user* nil
+  "set proxy username if authorization is required to use the proxy")
+(defvar *proxy-pass* nil
+  "set proxy password if authorization is required to use the proxy")
 
 (defun full-proxy-path (host port path)
   (format nil "~:[http~;https~]://~A~:[:~D~;~*~]~A"
@@ -1281,11 +1283,21 @@ the indexes in the header accordingly."
     :accessor path
     :initform "/")))
 
-(defun parse-urlstring (urlstring)
+(defclass proxy-url (url)
+  ((proxy-user
+    :initarg :proxy-user
+    :accessor proxy-user
+    :initform nil)
+   (proxy-pass
+    :initarg :proxy-pass
+    :accessor proxy-pass
+    :initform nil)))
+
+(defun parse-urlstring (urlstring &key (proxy-auth nil))
   (setf urlstring (string-trim " " urlstring))
   (let* ((pos (mismatch urlstring "http://" :test 'char-equal))
          (mark pos)
-         (url (make-instance 'url)))
+         (url (make-instance 'proxy-url)))
     (labels ((save ()
                (subseq urlstring mark pos))
              (mark ()
@@ -1299,10 +1311,35 @@ the indexes in the header accordingly."
                (case char
                  (#\/
                   (setf (port url) nil)
+                  (incf pos)
                   (mark)
                   #'in-path)
                  (t
-                  #'in-host)))
+                  (if proxy-auth
+                      #'in-proxy-user
+                      #'in-host))))
+             (in-proxy-user (char)
+               (case char
+                 (:end
+                  (error "~S is not a valid PROXY URL" urlstring))
+                 (#\:
+                  (setf (proxy-user url) (save))
+                  (incf pos)
+                  (mark)
+                  #'in-proxy-pass)
+                 (t
+                  #'in-proxy-user)))
+             (in-proxy-pass (char)
+               (case char
+                 (:end
+                  (error "~S is not a valid PROXY URL" urlstring))
+                 (#\@
+                  (setf (proxy-pass url) (save))
+                  (incf pos)
+                  (mark)
+                  #'in-host)
+                 (t
+                  #'in-proxy-pass)))
              (in-host (char)
                (case char
                  ((#\/ :end)
@@ -1361,6 +1398,11 @@ the indexes in the header accordingly."
           (and (/= 80 (port url)) (port url))
           (path url)))
 
+(defun proxyurlstring (proxy-url)
+  (format nil "~@[http://~A~]~@[:~D~]"
+          (hostname proxy-url)
+          (and (/= 80 (port proxy-url)) (port proxy-url))))
+
 (defmethod print-object ((url url) stream)
   (print-unreadable-object (url stream :type t)
     (prin1 (urlstring url) stream)))
@@ -1375,6 +1417,10 @@ the indexes in the header accordingly."
                            (port url2))
                  :path (or (path url1)
                            (path url2))))
+
+(defun need-proxyauthenticate-p (proxy-url)
+  (and (find #\@ proxy-url)
+       t))
 
 
 ;;; Requesting an URL and saving it to a file
@@ -1438,7 +1484,7 @@ the indexes in the header accordingly."
   (setf file (merge-pathnames file))
   (let ((redirect-count 0)
         (original-url url)
-        (connect-url (or (url *proxy-url*) url))
+        (connect-url (or (url *proxy-server*) url))
         (stream (if quietly
                     (make-broadcast-stream)
                     *trace-output*)))
@@ -1748,13 +1794,16 @@ the indexes in the header accordingly."
 
 (defun install (&key ((:path *home*) *home*)
                   ((:proxy *proxy-url*) *proxy-url*)
-                  ((:user *proxy-user*) *proxy-user*)
-                  ((:pass *proxy-pass*) *proxy-pass*)
                   client-url
                   client-version
                   dist-url
                   dist-version)
   (setf *home* (merge-pathnames *home* (truename *default-pathname-defaults*)))
+  (when *proxy-url*
+    (setf *proxy* (parse-urlstring *proxy-url* :proxy-auth (need-proxyauthenticate-p *proxy-url*)))
+    (setf *proxy-server* (proxyurlstring *proxy*))
+    (setf *proxy-user* (proxy-user *proxy*))
+    (setf *proxy-pass* (proxy-pass *proxy*)))
   (let ((name (non-empty-file-namestring *home*)))
     (when name
       (warn "Making ~A part of the install pathname directory"
