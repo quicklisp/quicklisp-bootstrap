@@ -980,7 +980,7 @@
   (subseq (storage sink) 0))
 
 (defvar *proxy-url* nil)
-(defver *proxy* nil
+(defvar *proxy* nil
   "instance of proxy-url")
 (defvar *proxy-server* nil
   "proxy server address and port")
