@@ -980,14 +980,6 @@
   (subseq (storage sink) 0))
 
 (defvar *proxy-url* nil)
-(defvar *proxy* nil
-  "instance of proxy-url")
-(defvar *proxy-server* nil
-  "proxy server address and port")
-(defvar *proxy-user* nil
-  "set proxy username if authorization is required to use the proxy")
-(defvar *proxy-pass* nil
-  "set proxy password if authorization is required to use the proxy")
 
 (defun full-proxy-path (host port path)
   (format nil "~:[http~;https~]://~A~:[:~D~;~*~]~A"
@@ -1029,23 +1021,29 @@
 
 (defun make-request-buffer (host port path &key (method "GET"))
   (setf method (string method))
-  (when *proxy-url*
-    (setf path (full-proxy-path host port path)))
-  (let ((sink (make-instance 'octet-sink)))
-    (flet ((add-line (&rest strings)
-             (apply #'add-strings sink strings)
-             (add-newline sink)))
-      (add-line method " " path " HTTP/1.1")
-      (add-line "Host: " host (if (= port 80) ""
-                                  (format nil ":~D" port)))
-      (when (and *proxy-url* *proxy-user* *proxy-pass*)
-        (add-line "Proxy-Authorization: Basic " (make-basic-authentication *proxy-user* *proxy-pass*)))
-      (add-line "Connection: close")
-      ;; FIXME: get this version string from somewhere else.
-      (add-line "User-Agent: quicklisp-bootstrap/"
-                qlqs-info:*version*)
-      (add-newline sink)
-      (sink-buffer sink))))
+  (let ((proxy-user nil)
+        (proxy-pass nil))
+    (when *proxy-url*
+      (setf path (full-proxy-path host port path))
+      (when (need-proxyauthenticate-p *proxy-url*)
+        (let ((proxy (parse-urlstring *proxy-url* :proxy-auth t)))
+          (setf proxy-user (proxy-user proxy))
+          (setf proxy-pass (proxy-pass proxy)))))
+    (let ((sink (make-instance 'octet-sink)))
+      (flet ((add-line (&rest strings)
+               (apply #'add-strings sink strings)
+               (add-newline sink)))
+        (add-line method " " path " HTTP/1.1")
+        (add-line "Host: " host (if (= port 80) ""
+                                    (format nil ":~D" port)))
+        (when (and proxy-user proxy-pass)
+          (add-line "Proxy-Authorization: Basic " (make-basic-authentication proxy-user proxy-pass)))
+        (add-line "Connection: close")
+        ;; FIXME: get this version string from somewhere else.
+        (add-line "User-Agent: quicklisp-bootstrap/"
+                  qlqs-info:*version*)
+        (add-newline sink)
+        (sink-buffer sink)))))
 
 (defun sink-until-matching (matcher cbuf)
   (let ((sink (make-instance 'octet-sink)))
@@ -1381,9 +1379,13 @@ the indexes in the header accordingly."
          (setf state (funcall state (aref urlstring pos)))
          (incf pos))))))
 
+(defun need-proxyauthenticate-p (proxy-url)
+  (and (find #\@ proxy-url)
+       t))
+
 (defun url (thing)
   (if (stringp thing)
-      (parse-urlstring thing)
+      (parse-urlstring thing :proxy-auth (need-proxyauthenticate-p thing))
       thing))
 
 (defgeneric request-buffer (method url)
@@ -1417,10 +1419,6 @@ the indexes in the header accordingly."
                            (port url2))
                  :path (or (path url1)
                            (path url2))))
-
-(defun need-proxyauthenticate-p (proxy-url)
-  (and (find #\@ proxy-url)
-       t))
 
 
 ;;; Requesting an URL and saving it to a file
@@ -1484,7 +1482,7 @@ the indexes in the header accordingly."
   (setf file (merge-pathnames file))
   (let ((redirect-count 0)
         (original-url url)
-        (connect-url (or (url *proxy-server*) url))
+        (connect-url (or (url *proxy-url*) url))
         (stream (if quietly
                     (make-broadcast-stream)
                     *trace-output*)))
@@ -1765,8 +1763,6 @@ the indexes in the header accordingly."
 (defun initial-install (&key (client-url *client-info-url*) dist-url)
   (setf *quickstart-parameters*
         (list :proxy-url *proxy-url*
-	      :proxy-user *proxy-user*
-	      :proxy-pass *proxy-pass*
               :initial-dist-url dist-url))
   (ensure-directories-exist (qmerge "tmp/"))
   (let ((client-info (fetch-client-info client-url))
@@ -1799,11 +1795,6 @@ the indexes in the header accordingly."
                   dist-url
                   dist-version)
   (setf *home* (merge-pathnames *home* (truename *default-pathname-defaults*)))
-  (when *proxy-url*
-    (setf *proxy* (parse-urlstring *proxy-url* :proxy-auth (need-proxyauthenticate-p *proxy-url*)))
-    (setf *proxy-server* (proxyurlstring *proxy*))
-    (setf *proxy-user* (proxy-user *proxy*))
-    (setf *proxy-pass* (proxy-pass *proxy*)))
   (let ((name (non-empty-file-namestring *home*)))
     (when name
       (warn "Making ~A part of the install pathname directory"
