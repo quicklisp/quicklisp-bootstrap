@@ -1489,7 +1489,7 @@ the indexes in the header accordingly."
     (loop
      (when (<= maximum-redirects redirect-count)
        (error "Too many redirects for ~A" original-url))
-     (with-connection (connection (hostname connect-url) (port connect-url))
+     (with-connection (connection (hostname url) (port url))
        (let ((cbuf (make-instance 'cbuf :connection connection))
              (request (request-buffer "GET" url)))
          (write-octets request connection)
