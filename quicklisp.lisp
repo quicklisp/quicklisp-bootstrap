@@ -1489,7 +1489,7 @@ the indexes in the header accordingly."
     (loop
      (when (<= maximum-redirects redirect-count)
        (error "Too many redirects for ~A" original-url))
-     (with-connection (connection (hostname url) (port url))
+     (with-connection (connection (hostname connect-url) (port connect-url))
        (let ((cbuf (make-instance 'cbuf :connection connection))
              (request (request-buffer "GET" url)))
          (write-octets request connection)
@@ -1517,9 +1517,9 @@ the indexes in the header accordingly."
                    (error "Redirect code ~D received, but no Location: header"
                           (status header)))
                  (incf redirect-count)
-                 (setf url (merge-urls new-urlstring
+                 (setf connect-url (merge-urls new-urlstring
                                        url))
-                 (format stream "~&; Redirecting to ~A~%" url))
+                 (format stream "~&; Redirecting to ~A~%" connect-url))
                (return (values header (and file (probe-file file)))))))))))
 
 
