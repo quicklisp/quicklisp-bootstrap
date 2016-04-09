@@ -1731,7 +1731,7 @@ the indexes in the header accordingly."
           version))
 
 (defun distinfo-url-from-version (version)
-  (format nil "http://~A/dist/~A/distinfo.txt"
+  (format nil "http://~A/dist/quicklisp/~A/distinfo.txt"
           *quicklisp-hostname*
           version))
 
