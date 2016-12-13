@@ -1758,6 +1758,7 @@ the indexes in the header accordingly."
     (format t "    To load a system, use: (ql:quickload \"system-name\")~%~%")
     (format t "    To find systems, use: (ql:system-apropos \"term\")~%~%")
     (format t "    To load Quicklisp every time you start Lisp, use: (ql:add-to-init-file)~%~%")
+    (format t "    To configure ASDF to search the Quicklisp tree, use: (ql:configure-asdf)~%~%")
     (format t "    For more information, see http://www.quicklisp.org/beta/~%~%")))
 
 (defun initial-install (&key (client-url *client-info-url*) dist-url)
