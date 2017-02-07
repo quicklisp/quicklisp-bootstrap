@@ -129,7 +129,7 @@ fpNm6tGo02uhYdrMacx1B+MEp3D2j9G6QkWsOgfQ6hhNm+oGIHp7WZQ4XYoOpP0X
 (defpackage #:qlqs-info
   (:export #:*version*))
 
-(defvar qlqs-info:*version* "2015-01-28")
+(defvar qlqs-info:*version* "2017-02-07")
 
 (defpackage #:qlqs-impl
   (:use #:cl)
