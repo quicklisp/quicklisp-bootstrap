@@ -181,7 +181,7 @@ fpNm6tGo02uhYdrMacx1B+MEp3D2j9G6QkWsOgfQ6hhNm+oGIHp7WZQ4XYoOpP0X
   (:use #:cl)
   (:export #:unpack-tarball))
 
-(defpackage #:qlqs-pgp
+(defpackage #:qlqs-openpgp
   (:use #:cl)
   (:export #:verify-signature
            #:load-signature
@@ -190,7 +190,9 @@ fpNm6tGo02uhYdrMacx1B+MEp3D2j9G6QkWsOgfQ6hhNm+oGIHp7WZQ4XYoOpP0X
            #:sha256))
 
 (defpackage #:quicklisp-quickstart
-  (:use #:cl #:qlqs-impl #:qlqs-impl-util #:qlqs-http #:qlqs-minitar #:qlqs-pgp)
+  (:use #:cl
+        #:qlqs-impl #:qlqs-impl-util
+        #:qlqs-http #:qlqs-minitar #:qlqs-openpgp)
   (:export #:install
            #:help
            #:*proxy-url*
@@ -1677,7 +1679,7 @@ the indexes in the header accordingly."
                (push tar-path result)))))))))
 
 
-(in-package #:qlqs-pgp)
+(in-package #:qlqs-openpgp)
 
 ;;;; utils.lisp
 
@@ -3014,7 +3016,7 @@ specified in RFC 4880 section 4.2."
 (defun qmerge (pathname)
   (merge-pathnames pathname *home*))
 
-(defun pgp-checked-fetch (url file)
+(defun openpgp-checked-fetch (url file)
   (let ((sig-url (format nil "~A.asc" url))
         (sig-file (qmerge "tmp/signature.txt"))
         (temp-file (qmerge "tmp/signed-data.dat")))
@@ -3024,7 +3026,8 @@ specified in RFC 4880 section 4.2."
       (unless (verify-signature temp-file
                                 signature
                                 (release-public-key))
-        (error "PGP signature validation of ~A FAILED -- signature from ~A ~
+        (error "OpenPGP signature validation of ~A FAILED ~
+                -- signature from ~A ~
                 -- ~A" url sig-url signature))
       (rename-file temp-file file))))
 
@@ -3085,7 +3088,7 @@ specified in RFC 4880 section 4.2."
   "Fetch and return the client info data at URL."
   (let ((local-client-info-file (qmerge "tmp/client-info.sexp")))
     (ensure-directories-exist local-client-info-file)
-    (pgp-checked-fetch url local-client-info-file)
+    (openpgp-checked-fetch url local-client-info-file)
     (with-open-file (stream local-client-info-file)
       (list* :source-file local-client-info-file
              (safely-read stream)))))
