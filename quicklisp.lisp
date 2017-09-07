@@ -3022,6 +3022,8 @@ specified in RFC 4880 section 4.2."
         (temp-file (qmerge "tmp/signed-data.dat")))
     (fetch sig-url sig-file)
     (fetch url temp-file)
+    (format t "~&; Verifying OpenPGP signature...")
+    (force-output)
     (let ((signature (load-signature sig-file)))
       (unless (verify-signature temp-file
                                 signature
@@ -3029,11 +3031,15 @@ specified in RFC 4880 section 4.2."
         (error "OpenPGP signature validation of ~A FAILED ~
                 -- signature from ~A ~
                 -- ~A" url sig-url signature))
+      (format t "passed~%")
+      (force-output)
       (rename-file temp-file file))))
 
 (defun sha256-checked-fetch (url expected-sha256-string file)
   (let ((temp-file (qmerge "tmp/sha256-data.dat")))
     (fetch url temp-file)
+    (format t "~&; Verifying SHA256...")
+    (force-output)
     (let ((actual-sha256-string (file-sha-string 'sha256
                                                  temp-file)))
       (unless (equalp expected-sha256-string actual-sha256-string)
@@ -3043,6 +3049,8 @@ specified in RFC 4880 section 4.2."
                url
                expected-sha256-string
                actual-sha256-string))
+      (format t "passed~%")
+      (force-output)
       (rename-file temp-file file))))
 
 (defvar *quickstart-parameters* nil
