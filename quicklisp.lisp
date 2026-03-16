@@ -15,6 +15,14 @@
 ;;;;
 
 (cl:in-package #:cl-user)
+
+#+genera
+(multiple-value-bind (major minor)
+    (sct:get-system-version)
+  (unless (or (> major 501)
+              (and (= major 501) (>= minor 16)))
+    (error "Quicklisp requires Genera 9.0.2 or later")))
+
 (cl:defpackage #:qlqs-user
   (:use #:cl))
 (cl:in-package #:qlqs-user)
@@ -38,6 +46,7 @@
            #:cmucl
            #:cormanlisp
            #:ecl
+           #:genera
            #:gcl
            #:lispworks
 	   #:mkcl
@@ -297,6 +306,15 @@
                   #:inet-socket))
 
 
+;;; Genera
+
+(define-implementation-package :genera #:qlqs-genera
+  (:documentation "Genera - https://github.com/SymbolicsGenera/IssuesAndWiki")
+  (:class genera)
+  (:reexport-from #:tcp
+                  #:open-tcp-stream))
+
+
 ;;; LispWorks
 
 (define-implementation-package :lispworks #:qlqs-lispworks
@@ -438,6 +456,8 @@
                                   :input t
                                   :output t
                                   :buffering :full)))
+  (:implementation genera
+    (qlqs-genera:open-tcp-stream host port nil :direction :io :characters nil))
   (:implementation lispworks
     (qlqs-lispworks:open-tcp-stream host port
                                    :direction :io
@@ -685,6 +705,8 @@
          13)
         ((eql char :lf)
          10)
+        ((eql char :tab)
+         9)
         (t
          (let ((code (char-code char)))
            (if (<= 0 code 127)
@@ -693,7 +715,7 @@
                       char))))))
 
 (defvar *whitespace*
-  (list (acode #\Space) (acode #\Tab) (acode :cr) (acode :lf)))
+  (list (acode #\Space) (acode :tab) (acode :cr) (acode :lf)))
 
 (defun whitep (code)
   (member code *whitespace*))
@@ -735,6 +757,7 @@
                         (ecase key
                           (:cr 13)
                           (:lf 10)
+                          (:tab 9)
                           ((t) t)))))
                    (if (consp keys) keys (list keys)))))
     `(case ,value
@@ -1221,7 +1244,7 @@ the indexes in the header accordingly."
               (return-from process-header header))
              (in-new-line (code)
                (acase code
-                 ((#\Tab #\Space) (setf mark nil) #'in-value)
+                 ((:tab #\Space) (setf mark nil) #'in-value)
                  (t
                   (when mark
                     (save mark value-ends))
@@ -1234,7 +1257,7 @@ the indexes in the header accordingly."
                  (t (in-new-line code))))
              (pending-value (code)
                (acase code
-                 ((#\Tab #\Space) #'pending-value)
+                 ((:tab #\Space) #'pending-value)
                  (:cr #'after-cr)
                  (:lf #'in-new-line)
                  (t (save pos value-starts) #'in-value)))
@@ -1246,7 +1269,7 @@ the indexes in the header accordingly."
                   #'in-value)
                  ((:cr :lf)
                   (finish))
-                 ((#\Tab #\Space)
+                 ((:tab #\Space)
                   (error "Unexpected whitespace in header field name"))
                  (t
                   (unless (<= 0 code 127)
